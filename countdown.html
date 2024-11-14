@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8 Hour Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #333333; /* Dark background for high contrast */
+            color: white; /* Light text for readability */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 2rem;
+        }
+        .container {
+            text-align: center;
+        }
+        .timer {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background-color: #ff4d4d; /* Bright red button */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #e60000;
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="timer" id="timer">08:00:00</div>
+        <button id="startBtn" class="btn">Start Timer</button>
+    </div>
+
+    <script>
+        let timerInterval;
+        let startTime = localStorage.getItem('startTime');
+        let remainingTime = localStorage.getItem('remainingTime');
+        let timerDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+        // Function to format time in HH:MM:SS format
+        function formatTime(ms) {
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Function to update the timer display
+        function updateTimer() {
+            if (remainingTime <= 0) {
+                clearInterval(timerInterval);
+                localStorage.removeItem('startTime');
+                localStorage.removeItem('remainingTime');
+                document.getElementById('timer').textContent = "00:00:00";
+                alert("Time's up!");
+                document.getElementById('startBtn').disabled = false; // Re-enable the start button
+                return;
+            }
+
+            document.getElementById('timer').textContent = formatTime(remainingTime);
+            remainingTime -= 1000; // Decrease by 1 second
+
+            // Save the remaining time in localStorage
+            localStorage.setItem('remainingTime', remainingTime);
+        }
+
+        // Function to start or restart the timer
+        function startTimer() {
+            // Set the start time and remaining time to the full 8 hours (resetting if needed)
+            startTime = Date.now();
+            remainingTime = timerDuration;
+            
+            // Save to localStorage
+            localStorage.setItem('startTime', startTime);
+            localStorage.setItem('remainingTime', remainingTime);
+
+            // Disable the start button to prevent restarting the timer until it's finished
+            document.getElementById('startBtn').disabled = true;
+
+            // Start the timer
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Event listener for the start button
+        document.getElementById('startBtn').addEventListener('click', startTimer);
+
+        // If the timer was already started, calculate remaining time on page load
+        if (startTime && remainingTime > 0) {
+            // Calculate the remaining time based on the current time and the stored start time
+            const elapsedTime = Date.now() - startTime;
+            remainingTime = timerDuration - elapsedTime;
+
+            if (remainingTime <= 0) {
+                clearInterval(timerInterval);
+                localStorage.removeItem('startTime');
+                localStorage.removeItem('remainingTime');
+                document.getElementById('timer').textContent = "00:00:00";
+                alert("Time's up!");
+                document.getElementById('startBtn').disabled = false;
+            } else {
+                // Start the timer with the remaining time
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('startBtn').disabled = true;
+            }
+        }
+    </script>
+
+</body>
+</html>
